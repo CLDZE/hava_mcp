@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+dist/
+build/
+*.egg-info/
+.env
+exports/
+
+# macOS
+.DS_Store
+
+# Local tool caches / configs
+.boost/
+.codex/
+.claude/

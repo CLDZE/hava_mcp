@@ -1,0 +1,251 @@
+{
+  "manifest_version": "0.3",
+  "name": "hava-mcp",
+  "display_name": "Hava Cloud Diagrams",
+  "version": "0.3.9",
+  "description": "Full Hava.io API access: list, search, export and manage cloud architecture diagrams for AWS, Azure, GCP and Kubernetes.",
+  "long_description": "Gives Claude 44 tools covering the Hava.io API: list and search the automatically generated architecture diagrams for your connected cloud accounts, query the underlying cloud resources, inspect version history, export any view to PNG, PDF, editable Visio (VSDX), CSV or JSON, manage notes and embeddable shares, trigger source re-imports, and administer teams, projects and API tokens.\n\nDestructive operations require an explicit confirmation flag, and setting HAVA_MCP_READ_ONLY=1 removes every mutating tool from the list entirely. Connecting cloud credentials and minting API tokens are deliberately not exposed.\n\nIn Hava's API a diagram is an *environment* holding several *views* (infrastructure, extended, security, container, list); exports act on a view, so every listing returns the view IDs an export needs. Format and view combinations are validated before calling Hava, so unsupported pairs fail with a useful message instead of an HTTP 422.\n\nAuthentication is a single setting: paste your Hava API token into the field this extension asks for at install time. It is stored in your OS keychain and passed to the server as HAVA_API_TOKEN. There is no login step and the server stores nothing itself. API access requires a Hava Teams/Business plan or a self-hosted install.\n\nmacOS only. The API endpoint defaults to https://api.hava.io and is not asked for; set HAVA_ENDPOINT only if you run Hava self-hosted.\n\nRequires `uv` (https://docs.astral.sh/uv) on your machine: this is a Python server and Claude Desktop ships no Python runtime. uv supplies Python 3.10+ and the dependencies on first launch. If uv is missing, the extension log explains how to install it.\n\nBuilt by CloudZone against the Hava REST API v1.1.6. MIT licensed.",
+  "author": {
+    "name": "CloudZone",
+    "email": "oleggo@cloudzone.io",
+    "url": "https://cloudzone.io"
+  },
+  "homepage": "https://www.hava.io",
+  "documentation": "https://docs.hava.io",
+  "support": "https://docs.hava.io",
+  "privacy_policies": [
+    "https://www.hava.io/privacy"
+  ],
+  "icon": "icon.png",
+  "server": {
+    "type": "node",
+    "entry_point": "server/launch.mjs",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/server/launch.mjs"
+      ],
+      "env": {
+        "HAVA_API_TOKEN": "${user_config.api_token}",
+        "HAVA_MCP_READ_ONLY": "${user_config.read_only}"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "hava_auth_status",
+      "description": "Report which Hava API token is in use, where it came from, and whether it works."
+    },
+    {
+      "name": "hava_list_diagrams",
+      "description": "List all Hava diagrams (environments) in the account, one page at a time."
+    },
+    {
+      "name": "hava_find_diagrams",
+      "description": "Find diagrams by name, or by the cloud resources they contain."
+    },
+    {
+      "name": "hava_get_diagram",
+      "description": "Get one diagram with its views, sources, and optionally its resources."
+    },
+    {
+      "name": "hava_list_diagram_versions",
+      "description": "List the version history of a diagram, newest first by default."
+    },
+    {
+      "name": "hava_list_sources",
+      "description": "List the cloud accounts (AWS/Azure/GCP/Kubernetes sources) connected to Hava."
+    },
+    {
+      "name": "hava_export_diagram",
+      "description": "Export one view of a Hava diagram to PNG, PDF, VSDX, CSV, or JSON."
+    },
+    {
+      "name": "hava_get_job",
+      "description": "Check an asynchronous Hava job and collect its result."
+    },
+    {
+      "name": "hava_list_diagram_notes",
+      "description": "List the notes people have left on a diagram."
+    },
+    {
+      "name": "hava_create_diagram_note",
+      "description": "Add a note to a diagram, optionally tagging teammates."
+    },
+    {
+      "name": "hava_delete_diagram_note",
+      "description": "Delete a note from a diagram."
+    },
+    {
+      "name": "hava_list_diagram_shares",
+      "description": "List the embeddable shares that exist for a diagram."
+    },
+    {
+      "name": "hava_get_diagram_share",
+      "description": "Get the details and configuration of one diagram share."
+    },
+    {
+      "name": "hava_create_diagram_share",
+      "description": "Create a publicly accessible, embeddable link to a diagram."
+    },
+    {
+      "name": "hava_update_diagram_share",
+      "description": "Change the configuration of an existing share (PNG render options)."
+    },
+    {
+      "name": "hava_create_diagram",
+      "description": "Create a new custom diagram from a Hava search query."
+    },
+    {
+      "name": "hava_update_diagram",
+      "description": "Change the query or name of a custom diagram, triggering a rebuild."
+    },
+    {
+      "name": "hava_delete_diagram",
+      "description": "Permanently delete a custom diagram and its entire version history."
+    },
+    {
+      "name": "hava_list_teams",
+      "description": "List the teams in a Hava account, with their roles and members."
+    },
+    {
+      "name": "hava_get_team",
+      "description": "Get one team with its roles and full member list."
+    },
+    {
+      "name": "hava_create_team",
+      "description": "Create a team in the Hava account."
+    },
+    {
+      "name": "hava_update_team",
+      "description": "Rename a team or change the roles it grants."
+    },
+    {
+      "name": "hava_delete_team",
+      "description": "Delete a team, which also removes its members from the Hava account."
+    },
+    {
+      "name": "hava_add_team_member",
+      "description": "Add an existing Hava user to a team by email."
+    },
+    {
+      "name": "hava_invite_team_member",
+      "description": "Invite someone to Hava by email and add them to a team."
+    },
+    {
+      "name": "hava_remove_team_member",
+      "description": "Remove a user from a team, revoking the access that team grants."
+    },
+    {
+      "name": "hava_list_projects",
+      "description": "List the projects in a Hava account."
+    },
+    {
+      "name": "hava_get_project",
+      "description": "Get one project with its description and members."
+    },
+    {
+      "name": "hava_create_project",
+      "description": "Create a project for grouping environments and scoping access."
+    },
+    {
+      "name": "hava_update_project",
+      "description": "Rename a project or change its description."
+    },
+    {
+      "name": "hava_delete_project",
+      "description": "Delete a project, removing its grouping and per-project access."
+    },
+    {
+      "name": "hava_add_project_member",
+      "description": "Give a user access to a project."
+    },
+    {
+      "name": "hava_remove_project_member",
+      "description": "Revoke a user's access to a project."
+    },
+    {
+      "name": "hava_list_api_tokens",
+      "description": "List the account's API tokens with their names and last-used times."
+    },
+    {
+      "name": "hava_delete_api_token",
+      "description": "Revoke an API token."
+    },
+    {
+      "name": "hava_list_reports",
+      "description": "List the reports available in the Hava account."
+    },
+    {
+      "name": "hava_get_report",
+      "description": "Get one report's details and contents."
+    },
+    {
+      "name": "hava_export_report",
+      "description": "Export a report to PDF, waiting for the job and returning a download link."
+    },
+    {
+      "name": "hava_list_resources",
+      "description": "Find cloud resources across all connected accounts using a Hava query."
+    },
+    {
+      "name": "hava_export_resources",
+      "description": "Export the full resource inventory for one or more cloud sources as JSON."
+    },
+    {
+      "name": "hava_get_source",
+      "description": "Get one cloud source, including when it last synced."
+    },
+    {
+      "name": "hava_sync_source",
+      "description": "Re-import a cloud account so its diagrams reflect current infrastructure."
+    },
+    {
+      "name": "hava_rename_source",
+      "description": "Rename a connected cloud source."
+    },
+    {
+      "name": "hava_delete_source",
+      "description": "Disconnect a cloud source, deleting all its resources and diagrams."
+    }
+  ],
+  "tools_generated": false,
+  "user_config": {
+    "api_token": {
+      "type": "string",
+      "title": "Hava API token",
+      "description": "Required. app.hava.io -> avatar -> Personal Settings -> API Tokens -> Display Token. Stored in your OS keychain. Needs a Hava Teams/Business plan or a self-hosted install.",
+      "sensitive": true,
+      "required": true
+    },
+    "read_only": {
+      "type": "boolean",
+      "title": "Read-only mode",
+      "description": "Hide every tool that changes anything in Hava, leaving 19 read-only tools.",
+      "default": false,
+      "required": false
+    }
+  },
+  "keywords": [
+    "hava",
+    "cloud",
+    "architecture",
+    "diagram",
+    "aws",
+    "azure",
+    "gcp",
+    "kubernetes",
+    "documentation",
+    "export",
+    "visio"
+  ],
+  "license": "MIT",
+  "compatibility": {
+    "platforms": [
+      "darwin"
+    ],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  }
+}

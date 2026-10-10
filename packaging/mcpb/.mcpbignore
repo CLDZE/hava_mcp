@@ -1,0 +1,6 @@
+icon-options.png
+*.svg
+probe.json
+__pycache__/
+*.pyc
+.venv/
