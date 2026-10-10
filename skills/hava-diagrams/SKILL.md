@@ -1,5 +1,6 @@
 ---
 name: hava-diagrams
+version: 2
 description: Find, inspect, export and manage Hava.io cloud architecture diagrams for AWS, Azure, GCP and Kubernetes accounts. Use whenever someone asks for a cloud architecture diagram, a network/VPC topology picture, a security-group view, an inventory of cloud resources, an "architecture doc" or a Visio/PNG/PDF export of infrastructure — and also when they ask what changed in an environment over time, want to share or embed a diagram, want to refresh diagrams after a deploy, or need to manage Hava teams, projects, members or API tokens. Do NOT use for drawing diagrams by hand (use a diagramming tool) or for live cloud API queries (use the cloud provider's own CLI).
 ---
 
