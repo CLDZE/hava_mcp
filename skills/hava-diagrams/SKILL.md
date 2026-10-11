@@ -1,6 +1,6 @@
 ---
 name: hava-diagrams
-version: 2
+version: 3
 description: Find, inspect, export and manage Hava.io cloud architecture diagrams for AWS, Azure, GCP and Kubernetes accounts. Use whenever someone asks for a cloud architecture diagram, a network/VPC topology picture, a security-group view, an inventory of cloud resources, an "architecture doc" or a Visio/PNG/PDF export of infrastructure — and also when they ask what changed in an environment over time, want to share or embed a diagram, want to refresh diagrams after a deploy, or need to manage Hava teams, projects, members or API tokens. Do NOT use for drawing diagrams by hand (use a diagramming tool) or for live cloud API queries (use the cloud provider's own CLI).
 ---
 
@@ -10,7 +10,7 @@ Hava continuously imports connected cloud accounts and generates architecture
 diagrams from the real configuration. Nothing here changes cloud
 infrastructure, but several tools do change things inside Hava.
 
-Full parameter lists for all 44 tools: `references/tools.md`.
+Full parameter lists for all 47 tools: `references/tools.md`.
 
 ## The one thing to understand first
 
@@ -47,6 +47,9 @@ diagram → pick a view → export. Every listing already returns each view's
 | "make a diagram of just these VPCs" | `hava_create_diagram` with a query |
 | "who has access?" | `hava_list_teams`, `hava_list_projects` |
 | "audit our API tokens" | `hava_list_api_tokens` |
+| "connect our AWS account" | `hava_create_source` (cross-account role only) |
+| "rotate a source's credentials" | `hava_update_source_credentials` |
+| "create an API token" | `hava_create_api_token` |
 | auth trouble | `hava_auth_status` |
 
 Every tool takes `response_format`: `markdown` (default, compact) or `json`
@@ -135,84 +138,13 @@ destructive:
 - Writing files: only pass `save_to` when a file was asked for, and say where
   it landed.
 
-## Not available through this server, by design
+## Tools that handle secrets
 
-- **Connecting a cloud source** (`POST /sources`) and rotating its credentials.
-  Both need long-lived cloud secrets — AWS secret keys, Azure client secrets,
-  GCP service-account JSON — which must not pass through a conversation
-  transcript. Do it in the Hava UI. `hava_rename_source` covers the safe part.
-- **Minting an API token** (`POST /accounts/{id}/tokens`), because the response
-  contains the secret. Create tokens in the Hava UI; listing and revoking them
-  is available here for hygiene.
-
-If the user asks for either, say why and point them at the Hava UI.
-
-## Known API caveats
-
-- **`resource_query` on `hava_find_diagrams` is unreliable.** Hava's
-  `/search/environments` returns a 500 for some well-formed queries. Fall back
-  to `name_contains` — do not keep retrying.
-- **Reports need a higher plan.** `/reports` returned 403 on the account this
-  was built against; the report tools say so rather than looking broken.
-- **A `pending` diagram has no usable views yet** — it is still building.
-- **Missing views are normal.** Asking for a view a diagram lacks returns an
-  error listing the views it does have; read that instead of guessing again.
-- **`page_size` floors at 10** on diagram listings.
-- **Renaming a custom diagram does not work.** `hava_update_diagram` accepts
-  `name`, Hava returns 200, and the name never changes. The tool re-reads and
-  says so. Tell the user to rename in the Hava UI; the query change does apply.
-- **A new diagram passes through an undocumented `importing` state.** It has no
-  views and cannot be annotated or exported until it reaches `active`;
-  `hava_create_diagram` waits for that.
-
-## Authentication
-
-**The only supported way to configure or update the plugin's Hava API token
-is from Claude Code running in a terminal, using
-`/plugin configure cloudzone-hava@synced`.** Always direct users to this
-exact flow when the token is missing, expired, revoked, or needs replacing.
-
-### Configure the token
-
-Get the token from app.hava.io → avatar → **Personal Settings** → **API
-Tokens** → **Display Token**. Walk the user through these steps:
-
-1. Open **Terminal** (or iTerm) on their Mac.
-2. Run `claude` to start Claude Code.
-3. Inside that Claude Code session, enter:
-
-   ```text
-   /plugin configure cloudzone-hava@synced
-   ```
-
-4. Paste the token into the **Hava API token** field and save.
-5. Restart Claude or open a new session, then use `hava_auth_status` to
-   verify authentication.
-
-The slash command belongs **inside Claude Code**, after starting `claude`;
-it must not be entered directly at the shell prompt. The user enters their
-credential in the configuration field, never in the conversation.
-
-Do not suggest any alternative token setup: chat slash commands, plugin
-cards or menus, environment variables, config files, or server tools.
-If asked for another method, explain that the terminal flow above is the
-only supported configuration method.
-
-### Missing tools or failed authentication
-
-Installing the plugin does not configure its token. If this skill is
-available but no `hava_*` tools appear, guide the user through the terminal
-steps above before retrying tools or suggesting a reinstall.
-
-If tools remain missing after configuration, have the user run
-`claude plugin list` in their terminal and check that
-`cloudzone-hava@synced` is loaded. A duplicate Hava installation may shadow
-the synced plugin; resolve that duplicate, then repeat
-`/plugin configure cloudzone-hava@synced` inside Claude Code. Do not switch
-to configuring a different plugin ID or another token setup method.
-
-If `hava_auth_status` reports a rejected token, have the user obtain a
-valid token from Hava and replace it through the same terminal flow.
+`hava_create_source` connects AWS accounts by cross-account role only (no
+secret); Azure, GCP and AWS-key sources must be added in the Hava UI.
+`hava_update_source_credentials` and `hava_create_api_token` put cloud
+credentials or a new API token into the conversation transcript. Warn the user
+first and never repeat a secret back.
 
 API access needs a Hava Teams/Business plan or a self-hosted install.
 Read-only mode is an option in the same configuration flow and hides every

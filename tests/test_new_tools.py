@@ -439,3 +439,52 @@ async def test_every_destructive_tool_has_a_confirm_parameter():
         and "confirm" not in (t.inputSchema or {}).get("properties", {})
     ]
     assert not missing, f"destructive tools without a confirm guard: {missing}"
+
+
+# --------------------------------------------------------------------------- #
+# Source creation / credential rotation / token creation
+# --------------------------------------------------------------------------- #
+
+@respx.mock
+async def test_create_source_sends_cross_account_role_only(hava_client):
+    route = respx.post(f"{BASE_URL}/sources").mock(
+        return_value=httpx.Response(200, json={"id": SOURCE, "display_name": "Prod", "type": "AWS::CrossAccountRole"})
+    )
+    text = await sources.hava_create_source(
+        name="Prod", role_arn="arn:aws:iam::1:role/Hava", external_id="abc", project_id="p1"
+    )
+    assert json.loads(route.calls.last.request.content) == {
+        "name": "Prod", "type": "AWS::CrossAccountRole", "role_arn": "arn:aws:iam::1:role/Hava",
+        "external_id": "abc", "project_id": "p1",
+    }
+    assert "Prod" in text
+
+
+async def test_create_source_has_no_secret_parameters():
+    from hava_mcp.server import mcp
+    tool = next(t for t in await mcp.list_tools() if t.name == "hava_create_source")
+    assert set(tool.inputSchema["properties"]) == {"name", "role_arn", "external_id", "project_id", "response_format"}
+
+
+@respx.mock
+async def test_update_source_credentials_sends_only_given_fields(hava_client):
+    route = respx.put(f"{BASE_URL}/sources/{SOURCE}").mock(
+        return_value=httpx.Response(200, json={"id": SOURCE, "display_name": "P"})
+    )
+    await sources.hava_update_source_credentials(source_id=SOURCE, type="AWS::Keys", secret_key="new")
+    assert json.loads(route.calls.last.request.content) == {"secret_key": "new"}
+
+
+async def test_update_source_credentials_rejects_empty_update(hava_client):
+    text = await sources.hava_update_source_credentials(source_id=SOURCE, type="AWS::Keys")
+    assert text.startswith("Error:") and "Nothing to update" in text
+
+
+@respx.mock
+async def test_create_api_token_shows_the_secret_once(token_client):
+    route = respx.post(f"{BASE_URL}/accounts/{ACCOUNT}/tokens").mock(
+        return_value=httpx.Response(201, json={"id": "tok9", "name": "CI", "token": "s3cr3t"})
+    )
+    text = await org.hava_create_api_token(name="CI")
+    assert json.loads(route.calls.last.request.content) == {"name": "CI"}
+    assert "s3cr3t" in text and "only time" in text

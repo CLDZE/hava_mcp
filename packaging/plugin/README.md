@@ -8,7 +8,7 @@ topology, security and container views from the real configuration.
 With this plugin Claude can list and search your diagrams, inspect the
 resources and dated version history of any of them, and export any view to
 PNG, PDF, editable Visio (VSDX), CSV or JSON — saving the file locally when you
-ask for one. It exposes 44 tools covering the whole useful Hava API — diagrams, resources,
+ask for one. It exposes 47 tools covering the whole useful Hava API — diagrams, resources,
 version history, exports, notes, embeddable shares, source re-imports, and
 administration of teams, projects and API tokens. It bundles a `hava-diagrams`
 skill that teaches Claude which tool to reach for, which export formats work

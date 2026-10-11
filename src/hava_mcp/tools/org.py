@@ -5,10 +5,8 @@ reports which account a token belongs to. The token is a JWT whose ``sub`` claim
 is the account ID (confirmed against the live API), so ``account_id`` defaults
 to that and callers rarely need to supply it.
 
-Deliberately missing: ``POST /accounts/{id}/tokens``. Minting an API token
-returns the secret in the response, which would put a long-lived credential for
-your whole cloud inventory into a conversation transcript. Create tokens in the
-Hava UI; listing and revoking them is available here for hygiene.
+``hava_create_api_token`` returns the new token's secret once, so it appears in
+the conversation transcript. Treat the transcript as sensitive.
 """
 
 from __future__ import annotations
@@ -541,6 +539,38 @@ async def hava_list_api_tokens(
     meta = page_meta(payload)
     data = {"account_id": account, "total": meta["total"], "count": len(tokens), "tokens": tokens}
     return as_output(data, render_tokens(tokens, meta), response_format)
+
+
+@hava_tool("hava_create_api_token", title="Create a Hava API token", read_only=False, idempotent=False)
+async def hava_create_api_token(
+    name: Annotated[str, Field(description="A name describing what the token is for, e.g. 'CI pipeline'.", min_length=1)],
+    account_id: AccountId = None,
+    response_format: Annotated[ResponseFormat, Field(default=ResponseFormat.MARKDOWN, description="'markdown' or 'json'.")] = ResponseFormat.MARKDOWN,
+) -> str:
+    """Generate a new API token. The secret is shown once and cannot be retrieved later.
+
+    SECURITY: the token grants access to the account's whole cloud inventory and
+    will appear in this conversation's transcript. Tell the user that, tell them
+    to store it immediately, and do not repeat it elsewhere or write it to files
+    unless asked. Use `hava_delete_api_token` to revoke it if it leaks.
+
+    Args:
+        name: Token name.
+        account_id: Account UUID; defaults to the token's own account.
+        response_format: 'markdown' (default) or 'json'.
+
+    Returns:
+        str: The token ID, name and secret value.
+    """
+    account = resolve_account_id(account_id)
+    response = await client().request("POST", f"/accounts/{account}/tokens", json={"name": name})
+    payload = response.json() if response.content else {}
+    data = {"token_id": payload.get("id"), "name": payload.get("name") or name, "token": payload.get("token")}
+    return as_output(data, render_simple("API token created", {
+        "token_id": f"`{data['token_id']}`",
+        "name": data["name"],
+        "token": f"`{data['token']}`",
+    }, note="This is the only time the token is shown. Store it now; it cannot be retrieved again."), response_format)
 
 
 @hava_tool("hava_delete_api_token", title="Revoke a Hava API token", read_only=False, destructive=True)

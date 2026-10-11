@@ -1,6 +1,6 @@
 # Hava MCP tools reference
 
-Generated from the bundled server (hava-mcp 0.3.9, 44 tools). Descriptions are the server's own; parameters are top-level inputs (`*` = required). `[W]` changes something in Hava, `[!]` is destructive and needs `confirm=true`.
+Generated from the bundled server (hava-mcp 0.3.9, 47 tools). Descriptions are the server's own; parameters are top-level inputs (`*` = required). `[W]` changes something in Hava, `[!]` is destructive and needs `confirm=true`.
 
 ## Contents
 
@@ -12,10 +12,10 @@ Generated from the bundled server (hava-mcp 0.3.9, 44 tools). Descriptions are t
 - **Notes**: `hava_list_diagram_notes`, `hava_create_diagram_note` `[W]`, `hava_delete_diagram_note` `[!]`
 - **Shares (public links)**: `hava_list_diagram_shares`, `hava_get_diagram_share`, `hava_create_diagram_share` `[W]`, `hava_update_diagram_share` `[W]`
 - **Reports**: `hava_list_reports`, `hava_get_report`, `hava_export_report` `[W]`
-- **Cloud sources**: `hava_list_sources`, `hava_get_source`, `hava_sync_source` `[W]`, `hava_rename_source` `[W]`, `hava_delete_source` `[!]`
+- **Cloud sources**: `hava_list_sources`, `hava_get_source`, `hava_sync_source` `[W]`, `hava_create_source` `[W]`, `hava_update_source_credentials` `[W]`, `hava_rename_source` `[W]`, `hava_delete_source` `[!]`
 - **Teams and members**: `hava_list_teams`, `hava_get_team`, `hava_create_team` `[W]`, `hava_update_team` `[W]`, `hava_delete_team` `[!]`, `hava_add_team_member` `[W]`, `hava_invite_team_member` `[W]`, `hava_remove_team_member` `[!]`
 - **Projects and members**: `hava_list_projects`, `hava_get_project`, `hava_create_project` `[W]`, `hava_update_project` `[W]`, `hava_delete_project` `[!]`, `hava_add_project_member` `[W]`, `hava_remove_project_member` `[!]`
-- **API tokens**: `hava_list_api_tokens`, `hava_delete_api_token` `[!]`
+- **API tokens**: `hava_list_api_tokens`, `hava_create_api_token` `[W]`, `hava_delete_api_token` `[!]`
 - **Authentication**: `hava_auth_status`
 
 ## Find diagrams
@@ -311,6 +311,37 @@ Parameters:
 - `wait_seconds` (integer): Seconds to wait for the import. 0 returns the job ID immediately, which is usually right - a full import can take many minutes.
 - `response_format` (any): 'markdown' or 'json'.
 
+### `hava_create_source` `[W]`
+
+Connect an AWS account to Hava using a cross-account IAM role.
+
+Parameters:
+
+- `name`* (string): Display name for the source.
+- `role_arn`* (string): ARN of the IAM role Hava assumes, e.g. arn:aws:iam::123456789012:role/Hava.
+- `external_id`* (string): External ID for the role trust policy (MD5 of your Hava account ID, shown in Hava's 'Add Environment' prompt).
+- `project_id` (null|string): Project UUID to add the source to. Defaults to the Default project.
+- `response_format` (any): 'markdown' or 'json'.
+
+### `hava_update_source_credentials` `[W]`
+
+Replace a source's cloud credentials (and optionally its name).
+
+Parameters:
+
+- `source_id`* (string): The source's UUID.
+- `type`* (string) — one of: AWS::Keys, AWS::CrossAccountRole, Azure::Credentials, GCP::ServiceAccountCredentials: The source's type (see hava_get_source). Decides which credential fields apply.
+- `name` (null|string): Optional new display name.
+- `role_arn` (null|string): AWS::CrossAccountRole: new role ARN.
+- `external_id` (null|string): AWS::CrossAccountRole: new external ID.
+- `access_key` (null|string): AWS::Keys: new access key ID.
+- `secret_key` (null|string): AWS::Keys / Azure::Credentials: new secret. A SECRET.
+- `subscription_id` (null|string): Azure::Credentials: subscription ID.
+- `tenant_id` (null|string): Azure::Credentials: tenant ID.
+- `client_id` (null|string): Azure::Credentials: client ID.
+- `service_account_json` (null|string): GCP::ServiceAccountCredentials: new key file JSON text. A SECRET.
+- `response_format` (any): 'markdown' or 'json'.
+
 ### `hava_rename_source` `[W]`
 
 Rename a connected cloud source.
@@ -508,6 +539,16 @@ Parameters:
 - `page` (integer|null): 1-based page number.
 - `page_size` (integer): Tokens per page.
 - `page_token` (null|string): next_page_token from a previous call.
+- `response_format` (any): 'markdown' or 'json'.
+
+### `hava_create_api_token` `[W]`
+
+Generate a new API token. The secret is shown once and cannot be retrieved later.
+
+Parameters:
+
+- `name`* (string): A name describing what the token is for, e.g. 'CI pipeline'.
+- `account_id` (null|string): Hava account UUID. Defaults to the account the API token belongs to.
 - `response_format` (any): 'markdown' or 'json'.
 
 ### `hava_delete_api_token` `[!]`

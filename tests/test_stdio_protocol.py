@@ -25,5 +25,5 @@ def test_stdio_handshake_and_tool_call(discovery, delayed):
     completed = subprocess.run(command, capture_output=True, text=True, env=env, timeout=40)
     assert completed.returncode == 0, completed.stderr
     tools = json.loads(completed.stdout)
-    assert len(tools) == 44
+    assert len(tools) == 47
     assert "hava_list_diagrams" in {tool["name"] for tool in tools}

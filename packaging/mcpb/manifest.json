@@ -2,9 +2,9 @@
   "manifest_version": "0.3",
   "name": "hava-mcp",
   "display_name": "Hava Cloud Diagrams",
-  "version": "0.3.9",
+  "version": "0.4.0",
   "description": "Full Hava.io API access: list, search, export and manage cloud architecture diagrams for AWS, Azure, GCP and Kubernetes.",
-  "long_description": "Gives Claude 44 tools covering the Hava.io API: list and search the automatically generated architecture diagrams for your connected cloud accounts, query the underlying cloud resources, inspect version history, export any view to PNG, PDF, editable Visio (VSDX), CSV or JSON, manage notes and embeddable shares, trigger source re-imports, and administer teams, projects and API tokens.\n\nDestructive operations require an explicit confirmation flag, and setting HAVA_MCP_READ_ONLY=1 removes every mutating tool from the list entirely. Connecting cloud credentials and minting API tokens are deliberately not exposed.\n\nIn Hava's API a diagram is an *environment* holding several *views* (infrastructure, extended, security, container, list); exports act on a view, so every listing returns the view IDs an export needs. Format and view combinations are validated before calling Hava, so unsupported pairs fail with a useful message instead of an HTTP 422.\n\nAuthentication is a single setting: paste your Hava API token into the field this extension asks for at install time. It is stored in your OS keychain and passed to the server as HAVA_API_TOKEN. There is no login step and the server stores nothing itself. API access requires a Hava Teams/Business plan or a self-hosted install.\n\nmacOS only. The API endpoint defaults to https://api.hava.io and is not asked for; set HAVA_ENDPOINT only if you run Hava self-hosted.\n\nRequires `uv` (https://docs.astral.sh/uv) on your machine: this is a Python server and Claude Desktop ships no Python runtime. uv supplies Python 3.10+ and the dependencies on first launch. If uv is missing, the extension log explains how to install it.\n\nBuilt by CloudZone against the Hava REST API v1.1.6. MIT licensed.",
+  "long_description": "Gives Claude 47 tools covering the Hava.io API: list and search the automatically generated architecture diagrams for your connected cloud accounts, query the underlying cloud resources, inspect version history, export any view to PNG, PDF, editable Visio (VSDX), CSV or JSON, manage notes and embeddable shares, trigger source re-imports, and administer teams, projects and API tokens.\n\nDestructive operations require an explicit confirmation flag, and setting HAVA_MCP_READ_ONLY=1 removes every mutating tool from the list entirely. Tools that accept cloud credentials or mint API tokens put those secrets in the conversation transcript.\n\nIn Hava's API a diagram is an *environment* holding several *views* (infrastructure, extended, security, container, list); exports act on a view, so every listing returns the view IDs an export needs. Format and view combinations are validated before calling Hava, so unsupported pairs fail with a useful message instead of an HTTP 422.\n\nAuthentication is a single setting: paste your Hava API token into the field this extension asks for at install time. It is stored in your OS keychain and passed to the server as HAVA_API_TOKEN. There is no login step and the server stores nothing itself. API access requires a Hava Teams/Business plan or a self-hosted install.\n\nmacOS only. The API endpoint defaults to https://api.hava.io and is not asked for; set HAVA_ENDPOINT only if you run Hava self-hosted.\n\nRequires `uv` (https://docs.astral.sh/uv) on your machine: this is a Python server and Claude Desktop ships no Python runtime. uv supplies Python 3.10+ and the dependencies on first launch. If uv is missing, the extension log explains how to install it.\n\nBuilt by CloudZone against the Hava REST API v1.1.6. MIT licensed.",
   "author": {
     "name": "CloudZone",
     "email": "oleggo@cloudzone.io",
@@ -169,6 +169,10 @@
       "description": "List the account's API tokens with their names and last-used times."
     },
     {
+      "name": "hava_create_api_token",
+      "description": "Generate a new API token. The secret is shown once."
+    },
+    {
       "name": "hava_delete_api_token",
       "description": "Revoke an API token."
     },
@@ -199,6 +203,14 @@
     {
       "name": "hava_sync_source",
       "description": "Re-import a cloud account so its diagrams reflect current infrastructure."
+    },
+    {
+      "name": "hava_create_source",
+      "description": "Connect an AWS account to Hava via a cross-account IAM role."
+    },
+    {
+      "name": "hava_update_source_credentials",
+      "description": "Replace a source's cloud credentials (and optionally its name)."
     },
     {
       "name": "hava_rename_source",

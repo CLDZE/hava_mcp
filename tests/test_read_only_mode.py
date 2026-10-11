@@ -40,7 +40,7 @@ def _list_tools(read_only: bool) -> dict:
 
 def test_full_mode_exposes_the_whole_surface():
     result = _list_tools(read_only=False)
-    assert result["count"] == 44
+    assert result["count"] == 47
     assert "hava_delete_source" in result["names"]
     # Authentication is configuration now, not a tool.
     assert "hava_login" not in result["names"]

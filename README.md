@@ -82,7 +82,7 @@ terminal flow in **Authentication** above.
 
 ## Tools
 
-44 tools covering every endpoint in the Hava API worth exposing. `[W]` changes
+47 tools covering every endpoint in the Hava API worth exposing. `[W]` changes
 something in Hava; `[!]` is destructive and requires `confirm=true`.
 
 | area | tools |
@@ -95,10 +95,10 @@ something in Hava; `[!]` is destructive and requires `confirm=true`.
 | Notes | `hava_list_diagram_notes`, `hava_create_diagram_note` `[W]`, `hava_delete_diagram_note` `[!]` |
 | Shares | `hava_list_diagram_shares`, `hava_get_diagram_share`, `hava_create_diagram_share` `[W]`, `hava_update_diagram_share` `[W]` |
 | Reports | `hava_list_reports`, `hava_get_report`, `hava_export_report` `[W]` |
-| Sources | `hava_list_sources`, `hava_get_source`, `hava_sync_source` `[W]`, `hava_rename_source` `[W]`, `hava_delete_source` `[!]` |
+| Sources | `hava_list_sources`, `hava_get_source`, `hava_sync_source` `[W]`, `hava_create_source` `[W]`, `hava_update_source_credentials` `[W]`, `hava_rename_source` `[W]`, `hava_delete_source` `[!]` |
 | Teams | `hava_list_teams`, `hava_get_team`, `hava_create_team` `[W]`, `hava_update_team` `[W]`, `hava_delete_team` `[!]`, `hava_add_team_member` `[W]`, `hava_invite_team_member` `[W]`, `hava_remove_team_member` `[!]` |
 | Projects | `hava_list_projects`, `hava_get_project`, `hava_create_project` `[W]`, `hava_update_project` `[W]`, `hava_delete_project` `[!]`, `hava_add_project_member` `[W]`, `hava_remove_project_member` `[!]` |
-| API tokens | `hava_list_api_tokens`, `hava_delete_api_token` `[!]` |
+| API tokens | `hava_list_api_tokens`, `hava_create_api_token` `[W]`, `hava_delete_api_token` `[!]` |
 | Auth | `hava_auth_status` |
 
 Every tool takes `response_format`: `markdown` (default, compact and readable)
@@ -119,15 +119,14 @@ endpoint that reports one. The API token is a JWT whose `sub` claim is the
 account ID (verified against the live API), so the org tools derive it
 automatically; pass `account_id` only to target a different account.
 
-### Not exposed, deliberately
+### Tools that handle secrets
 
-- **Connecting a cloud source** and rotating its credentials (`POST /sources`,
-  credential fields of `PUT /sources/{id}`). These carry long-lived cloud
-  secrets — AWS secret keys, Azure client secrets, GCP service-account JSON —
-  which should not pass through an LLM conversation. `hava_rename_source`
-  exposes the safe part of that endpoint.
-- **Minting an API token** (`POST /accounts/{id}/tokens`), whose response
-  contains the secret. Listing and revoking tokens *is* available for hygiene.
+`hava_create_source` only connects AWS accounts through a cross-account role,
+which carries no secret. `hava_update_source_credentials` and
+`hava_create_api_token` pass long-lived credentials (AWS keys, Azure client
+secrets, GCP service-account JSON, a new API token) through the conversation,
+so they land in the transcript. Secrets are never echoed back by the source
+tools; a new API token is shown once in the result. Use read-only mode to hide all of them.
 
 ### Export format / view compatibility
 

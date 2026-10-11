@@ -1,5 +1,11 @@
 # cloudzone-hava build notes
 
+## 0.4.0 - secret-handling tools
+
+Adds `hava_create_source` (AWS cross-account role only),
+`hava_update_source_credentials` and `hava_create_api_token`: 47 tools in total.
+The last two pass credentials through the conversation. Skill is now version 3.
+
 ## 0.3.9 - Claude Desktop protocol compatibility
 
 Claude Desktop 2.31226.1 can time out its modern discovery probe, then send a

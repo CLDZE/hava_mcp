@@ -83,7 +83,8 @@ EXPECTED_TOOLS = {
     "hava_list_reports", "hava_get_report", "hava_export_report",
     # sources
     "hava_list_sources", "hava_get_source", "hava_sync_source",
-    "hava_rename_source", "hava_delete_source",
+    "hava_rename_source", "hava_delete_source", "hava_create_source",
+    "hava_update_source_credentials",
     # org: teams
     "hava_list_teams", "hava_get_team", "hava_create_team", "hava_update_team",
     "hava_delete_team", "hava_add_team_member", "hava_invite_team_member",
@@ -93,7 +94,7 @@ EXPECTED_TOOLS = {
     "hava_update_project", "hava_delete_project", "hava_add_project_member",
     "hava_remove_project_member",
     # org: api tokens
-    "hava_list_api_tokens", "hava_delete_api_token",
+    "hava_list_api_tokens", "hava_delete_api_token", "hava_create_api_token",
 }
 
 
