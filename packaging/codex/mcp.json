@@ -1,0 +1,16 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "hava": {
+      "type": "stdio",
+      "command": "sh",
+      "args": [
+        "${PLUGIN_ROOT}/server/launch.sh"
+      ],
+      "cwd": "${PLUGIN_ROOT}",
+      "env": {
+        "HAVA_MCP_HOME": "${PLUGIN_DATA}/runtime"
+      }
+    }
+  }
+}

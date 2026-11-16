@@ -1,0 +1,51 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "cloudzone-hava",
+  "version": "0.0.0",
+  "description": "Full Hava.io API access: list, search, export and manage cloud architecture diagrams for AWS, Azure, GCP and Kubernetes.",
+  "author": {
+    "name": "CloudZone",
+    "email": "oleggo@cloudzone.io",
+    "url": "https://cloudzone.io"
+  },
+  "homepage": "https://www.hava.io",
+  "repository": "https://github.com/CLDZE/hava_mcp",
+  "license": "MIT",
+  "keywords": [
+    "hava",
+    "cloud",
+    "architecture",
+    "diagram",
+    "aws",
+    "azure",
+    "gcp",
+    "kubernetes",
+    "documentation",
+    "export",
+    "visio"
+  ],
+  "extensions": {
+    "com.openai": {
+      "onboardingSkill": "./skills/hava-setup/SKILL.md",
+      "interface": {
+        "displayName": "Hava Cloud Diagrams (CloudZone)",
+        "shortDescription": "Find, inspect and export your Hava cloud architecture diagrams.",
+        "longDescription": "Hava continuously imports your connected AWS, Azure, GCP and Kubernetes accounts and draws topology, security and container views from the real configuration. This plugin gives Codex 47 tools over the Hava.io API: list and search diagrams, query the underlying cloud resources, read dated version history, export any view to PNG, PDF, editable Visio (VSDX), CSV or JSON, manage notes and embeddable shares, trigger source re-imports, and administer teams, projects and API tokens. The bundled hava-diagrams skill teaches which tool to reach for, which export formats work with which views, how to wait on Hava's asynchronous export jobs, and which operations to confirm first. Destructive tools require an explicit confirm flag, and read-only mode hides every mutating tool. Needs uv and a Hava API token; API access requires a Hava Teams/Business plan or a self-hosted install.",
+        "developerName": "CloudZone",
+        "category": "Productivity",
+        "capabilities": [
+          "Read",
+          "Write"
+        ],
+        "websiteURL": "https://www.hava.io",
+        "privacyPolicyURL": "https://www.hava.io/privacy",
+        "composerIcon": "./assets/icon.png",
+        "logo": "./assets/icon.png",
+        "defaultPrompt": [
+          "List our Hava diagrams and export the production one to Visio.",
+          "What changed in our AWS production environment over the last month?"
+        ]
+      }
+    }
+  }
+}

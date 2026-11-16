@@ -38,7 +38,7 @@ def cmd_status(args: argparse.Namespace) -> int:
     if credential is None:
         print("status:            NO TOKEN CONFIGURED")
         print()
-        print(auth.SETUP_INSTRUCTIONS, file=sys.stderr)
+        print(auth.setup_instructions(), file=sys.stderr)
         return 1
     print(f"credential origin: {credential.origin}")
     print(f"token:             {auth.mask(credential.token)}")

@@ -1,5 +1,83 @@
 # cloudzone-hava build notes
 
+## 0.4.1 - a Codex package
+
+Adds a third artifact, `cloudzone-hava-mcp-codex-v<version>.zip`, built by
+`scripts/build.sh codex` from `packaging/codex/`. It is the portable
+[Agent Plugins](https://agent-plugins.org) format Codex reads - root
+`plugin.json` + `mcp.json` + `skills/` - carrying the same server and the same
+`hava-diagrams` skill as the Claude plugin, plus a Codex-specific
+`hava-setup` onboarding skill and an `install.sh`.
+
+Three things could not be carried over from the Claude packaging, and each one
+is a deliberate difference rather than an omission:
+
+- **No Node.** Claude Desktop ships Node and no Python, which is why
+  `launch.mjs` exists; Codex ships neither. The Codex package uses
+  `server/launch.sh` instead - same prepared-virtualenv design (stamped on the
+  source + lockfile, built under a `mkdir` lock, detached so a build survives
+  the client giving up), minus the Electron stdio bridging, which a Codex stdio
+  server does not need because its fd 0/1 really are the MCP stream. `uv`
+  remains the only prerequisite. `launch.sh --prepare` builds in the
+  foreground and exits; `install.sh` and the build's smoke test both use it.
+- **No install-time prompt, and no env to inherit.** Codex has no
+  `user_config` equivalent, and - confirmed in the Codex source, not just the
+  docs - it hands a stdio server only its own env allowlist, the literal `env`
+  from the server config, and the names a `config.toml` server lists in
+  `env_vars`. A plugin's bundled server can declare none of those, so an
+  exported `HAVA_API_TOKEN` normally never arrives. The launcher therefore
+  resolves configuration itself, from `~/.hava-mcp/{api_token,endpoint,read_only}`
+  (`HAVA_MCP_CONFIG_HOME` relocates them), with the environment still winning
+  where it does arrive. This re-introduces a credential file, which 0.3.0
+  removed for the Claude artifacts - those still have exactly one setting, and
+  nothing about them changed.
+- **Advice a Codex user can follow.** `auth.require()` printed Claude's
+  `/plugin configure` instructions to everyone. `auth.setup_instructions()`
+  now picks by `HAVA_MCP_HOST`, which the Codex launcher sets to `codex`;
+  every other host keeps the old text verbatim.
+
+One bug shipped in the first build of this package and is worth recording,
+because nothing about the package looked wrong: `install.sh` wrote
+`"authentication": "ON_FIRST_USE"` into the marketplace entry (a value the
+MCPB-builder skill's own packer offers). codex-cli deserializes that field as
+an enum accepting only `ON_INSTALL` or `ON_USE`, and an unknown variant makes
+it reject **the whole marketplace file** - every plugin in it, not just ours.
+`codex plugin marketplace list` says so exactly; ChatGPT says only "Could not
+add plugin. Please try again." It is now `ON_USE` (this server authenticates
+when a tool runs, not at install), and the build installs the packed zip into
+a throwaway `HOME` and has the real `codex` CLI confirm it:
+`verify_codex_install` asserts the marketplace loads, `codex plugin add`
+installs and enables the plugin, and `codex mcp list` shows the server
+pointing at the cached `server/launch.sh`. Verified against codex-cli 0.162.1 and 0.169.0,
+which also confirms `${PLUGIN_ROOT}` expansion in `args` and that Codex
+injects `PLUGIN_ROOT`/`PLUGIN_DATA` into the server's environment.
+
+`scripts/check_codex_package.py` validates the assembled package against the
+1.0.0 Agent Plugins schemas' rules (exact `$schema`, kebab `name`, no
+root property the schema forbids, `./`-prefixed `extensions."com.openai"`
+paths that exist, a transport `type` per server, no `${user_config.*}`
+leftovers, skill frontmatter `name` == folder, version higher than the newest
+zip already in the output directory). The schemas are not fetched: a build
+must not need the network.
+
+The build then smoke-tests the **packed** zip the way Codex starts it -
+`sh <root>/server/launch.sh` - and asserts its `tools/list` is identical to
+the one probed from source.
+
+Verified here: install into a throwaway `HOME` (plugin copied to
+`~/.codex/plugins/cloudzone-hava`, personal marketplace upserted without
+disturbing an unrelated entry, re-install idempotent), token resolution in all
+four states (env, file, env over file, unexpanded `${...}` placeholder
+dropped), `read_only` reducing 47 tools to 19 through the launcher, and
+`hava_auth_status` returning the Codex setup text, and - through
+`verify_codex_install` above - the `codex` CLI loading the marketplace,
+installing and enabling the plugin and registering its server. Not tested: an
+interactive Codex session starting the server and calling its tools, and the
+ChatGPT desktop app.
+
+A bundled stdio server keeps this package out of the public plugin directory;
+workspace publishing (ChatGPT -> Plugins -> Personal -> Publish) is unaffected.
+
 ## 0.4.0 - secret-handling tools
 
 Adds `hava_create_source` (AWS cross-account role only),

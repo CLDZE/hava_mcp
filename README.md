@@ -80,6 +80,49 @@ MCP client opened in this directory can discover the local server. This file
 does not configure an API token. Configure the synced plugin through the
 terminal flow in **Authentication** above.
 
+For Codex, the equivalent is a `.codex/config.toml` in this checkout —
+gitignored, so write your own. Codex hands a local server only its own
+environment allowlist, a server's literal `env` and the names listed in
+`env_vars`, so the token has to be named there while its value stays in the
+shell that starts `codex`:
+
+```toml
+[mcp_servers.hava]
+command = "/absolute/path/to/hava_mcp/.venv/bin/hava-mcp"
+env_vars = ["HAVA_API_TOKEN", "HAVA_ENDPOINT", "HAVA_MCP_READ_ONLY"]
+startup_timeout_sec = 30
+tool_timeout_sec = 120
+```
+
+Do not set `HAVA_MCP_HOST = "codex"` here: it switches the missing-token advice
+to the packaged plugin's `~/.hava-mcp/api_token` file, which only the plugin's
+`launch.sh` reads. A server started directly like this takes the token from
+`HAVA_API_TOKEN` alone.
+
+## Codex
+
+`./scripts/build.sh codex` produces `cloudzone-hava-mcp-codex-v<version>.zip`,
+a portable [Agent Plugins](https://agent-plugins.org) package for Codex CLI,
+the Codex IDE extension and Codex in the ChatGPT desktop app. Unzip it and run
+`./install.sh`: it copies the plugin to `~/.codex/plugins/cloudzone-hava`,
+registers it in the personal marketplace `~/.agents/plugins/marketplace.json`
+and test-builds the Python environment, which also fills uv's download cache.
+Then restart Codex, run `/plugins`, pick **Personal plugins** and install
+`cloudzone-hava`. The first Codex start is still slower than later ones: Codex
+gives the plugin its own data directory, so the server builds its environment
+once more there, from the cache.
+
+Codex has no install-time prompt and does not forward your shell environment to
+a plugin's bundled server, so its launcher reads the token from
+`~/.hava-mcp/api_token` (chmod 600), with `~/.hava-mcp/endpoint` and
+`~/.hava-mcp/read_only` as the other two switches. The bundled `hava-setup`
+skill walks through all of it. `packaging/codex/README.md` is the package's own
+documentation.
+
+Because the server is local (stdio), the package is not eligible for the public
+plugin directory; a ChatGPT workspace admin can still publish it to the
+workspace from **Plugins → Personal → Publish**.
+
 ## Tools
 
 47 tools covering every endpoint in the Hava API worth exposing. `[W]` changes
@@ -205,9 +248,10 @@ Behaviours confirmed against the live API that the OpenAPI spec does not state:
 ## Building the distributables
 
 ```bash
-./scripts/build.sh            # both artifacts
-./scripts/build.sh plugin     # just the org plugin zip
+./scripts/build.sh            # all three artifacts
+./scripts/build.sh plugin     # just the Claude org plugin zip
 ./scripts/build.sh mcpb       # just the Claude Desktop extension
+./scripts/build.sh codex      # just the Codex plugin zip
 OUT_DIR=/tmp ./scripts/build.sh
 ```
 
@@ -215,8 +259,9 @@ Filenames carry the version from `pyproject.toml`, so releases do not overwrite
 each other:
 
 ```
-cloudzone-hava-0.3.0.zip   # Claude organization -> Plugins & skills
-hava-mcp-0.3.0.mcpb        # Claude Desktop, double-click to install
+cloudzone-hava-0.4.1.zip               # Claude organization -> Plugins & skills
+hava-mcp-0.4.1.mcpb                    # Claude Desktop, double-click to install
+cloudzone-hava-mcp-codex-v0.4.1.zip    # Codex: unzip, then ./install.sh
 ```
 
 To cut a new version, bump `version` in `pyproject.toml` *and* `__version__` in
@@ -225,7 +270,8 @@ reference, probes the server for its live tool list, writes that into the
 `.mcpb` manifest, stamps the version into both manifests, validates both, and
 packs them.
 
-Version 0.3.9 pins MCP SDK 1.29.0 for Claude Desktop compatibility. Its legacy
+Version 0.4.1 pins MCP SDK 1.30.0 (1.x line; 0.3.9 introduced the 1.x pin) for
+Claude Desktop compatibility. Its legacy
 handshake remains valid even when Claude sends `server/discover` first and
 falls back to `initialize` after a startup timeout. This avoids the
 "connection is serving the 2026-07-28 protocol" error in Cowork/Code sessions.
@@ -239,13 +285,18 @@ installation. After changing dependencies or the project version, run `uv lock`
 before building. Every build checks the packed launcher by importing it as a
 module, negotiating stdio, listing tools, and calling the offline auth diagnostic.
 
-Packaging inputs live in `packaging/` (icon, both manifests, the launcher, and
-`plugin/mcp.json`, which is written to the bundle as `.mcp.json`).
+Packaging inputs live in `packaging/` (icon, the manifests, the launchers, and
+`plugin/mcp.json`, which is written to the Claude bundle as `.mcp.json`).
+`packaging/codex/` holds the Codex package: a portable `plugin.json` and
+`mcp.json`, the `hava-setup` onboarding skill, `install.sh`, and `launch.sh` —
+a shell launcher, because Codex ships neither Node nor Python. The Codex build
+validates the assembled package with `scripts/check_codex_package.py` and
+smoke-tests the packed zip the way Codex starts it, `sh <root>/server/launch.sh`.
 
 ## Development
 
 ```bash
-.venv/bin/python -m pytest    # 119 offline tests against a mocked Hava API
+.venv/bin/python -m pytest    # 133 offline tests against a mocked Hava API
 ```
 
 The test suite never touches the network: `respx` mocks the API, and

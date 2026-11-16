@@ -1,6 +1,6 @@
 # Hava MCP tools reference
 
-Generated from the bundled server (hava-mcp 0.3.9, 47 tools). Descriptions are the server's own; parameters are top-level inputs (`*` = required). `[W]` changes something in Hava, `[!]` is destructive and needs `confirm=true`.
+Generated from the bundled server (hava-mcp 0.4.1, 47 tools). Descriptions are the server's own; parameters are top-level inputs (`*` = required). `[W]` changes something in Hava, `[!]` is destructive and needs `confirm=true`.
 
 ## Contents
 
