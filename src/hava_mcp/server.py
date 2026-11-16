@@ -101,7 +101,7 @@ async def hava_auth_status(
     if credential is None:
         lines.append("Status: **no API token configured**")
         lines.append("")
-        lines.append(auth.SETUP_INSTRUCTIONS)
+        lines.append(auth.setup_instructions())
         return "\n".join(lines)
 
     lines.append(f"Credential origin: {credential.origin}")

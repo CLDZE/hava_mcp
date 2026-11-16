@@ -10,6 +10,12 @@ configured value securely and injects it into the server's environment.
 
 ``HAVA_ENDPOINT`` optionally overrides the API base URL for self-hosted Hava -
 the same variable name Hava's own CLI and Terraform provider use.
+
+The *advice* printed when no token is configured depends on the host, because
+each host configures it differently: Claude prompts at install time, while
+Codex has no such prompt and its launcher resolves the token itself. The
+Codex package sets ``HAVA_MCP_HOST=codex`` so the message matches what the
+reader can actually do.
 """
 
 from __future__ import annotations
@@ -21,6 +27,7 @@ from .errors import HavaConfigError
 
 TOKEN_ENV_VAR = "HAVA_API_TOKEN"
 ENDPOINT_ENV_VAR = "HAVA_ENDPOINT"
+HOST_ENV_VAR = "HAVA_MCP_HOST"
 DEFAULT_BASE_URL = "https://api.hava.io"
 
 TOKEN_PAGE_URL = "https://app.hava.io/settings/profile"
@@ -68,6 +75,49 @@ An empty api_token counts as "configured" but cannot authenticate; that is what
 API access requires a Hava Teams/Business plan or a self-hosted install.\
 """
 
+# Codex has no install-time configuration prompt, so its launcher
+# (server/launch.sh in the Codex package) resolves the token itself: the
+# environment first, then a 0600 file. Both routes end up here as
+# HAVA_API_TOKEN, which is why this text names the variable and the file.
+CODEX_SETUP_INSTRUCTIONS = f"""\
+This server needs a Hava API token. Codex never prompts for one, so write it
+to the file its launcher reads:
+
+  1. Get the token from {TOKEN_PAGE_URL}
+     (avatar in app.hava.io -> Personal Settings -> API Tokens ->
+     Display Token).
+  2. In a terminal:
+
+         mkdir -p ~/.hava-mcp
+         printf '%s' 'PASTE_THE_TOKEN' > ~/.hava-mcp/api_token
+         chmod 600 ~/.hava-mcp/api_token
+
+  3. Start a new Codex session and run hava_auth_status again.
+
+The file is the route that works. Codex does not hand a local MCP server its
+whole environment - only its own allowlist, a server's literal `env`, and the
+names a `config.toml` server lists in `env_vars` - and a plugin's bundled
+server cannot declare those. So exporting {TOKEN_ENV_VAR} in a shell usually
+does *not* reach this server; where it does, it wins over the file. Either way
+the launcher passes it on as {TOKEN_ENV_VAR} and nothing is stored here.
+
+Other knobs the launcher reads from ~/.hava-mcp (all optional):
+
+  - `endpoint`  - a self-hosted Hava base URL, instead of {DEFAULT_BASE_URL}
+  - `read_only` - create this file (empty is fine) to hide every tool that
+                  changes anything in Hava
+
+Set HAVA_MCP_CONFIG_HOME to read all three from somewhere else.
+
+API access requires a Hava Teams/Business plan or a self-hosted install.\
+"""
+
+
+def setup_instructions() -> str:
+    """The configuration advice that fits the host this server was started by."""
+    host = (os.environ.get(HOST_ENV_VAR) or "").strip().lower()
+    return CODEX_SETUP_INSTRUCTIONS if host == "codex" else SETUP_INSTRUCTIONS
+
 
 class Credential(NamedTuple):
     """A resolved token plus where it came from."""
@@ -102,7 +152,7 @@ def require() -> str:
     """Return the configured token or raise with setup instructions."""
     credential = resolve()
     if credential is None:
-        raise HavaConfigError(f"No Hava API token configured.\n\n{SETUP_INSTRUCTIONS}")
+        raise HavaConfigError(f"No Hava API token configured.\n\n{setup_instructions()}")
     return credential.token
 
 

@@ -31,6 +31,23 @@ def test_require_explains_how_to_configure_it():
     assert "HAVA_API_TOKEN" not in message
 
 
+def test_codex_gets_the_route_codex_actually_has(monkeypatch):
+    """Codex never prompts, so its launcher reads the token - say so instead."""
+    monkeypatch.setenv(auth.HOST_ENV_VAR, "codex")
+    with pytest.raises(HavaConfigError) as info:
+        auth.require()
+    message = str(info.value)
+    assert "~/.hava-mcp/api_token" in message
+    assert auth.TOKEN_ENV_VAR in message
+    # Advice a Codex user cannot follow is worse than none.
+    assert "plugin configure" not in message
+
+
+def test_an_unknown_host_keeps_the_default_advice(monkeypatch):
+    monkeypatch.setenv(auth.HOST_ENV_VAR, "something-else")
+    assert auth.setup_instructions() is auth.SETUP_INSTRUCTIONS
+
+
 def test_surrounding_whitespace_is_trimmed(monkeypatch):
     monkeypatch.setenv(auth.TOKEN_ENV_VAR, "  padded-token \n")
     assert auth.resolve().token == "padded-token"
