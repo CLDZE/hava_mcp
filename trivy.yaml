@@ -1,0 +1,8 @@
+# Trivy loads this file automatically from the working directory.
+# Skip git-ignored local tool state: .boost holds captured hook inputs (test
+# commands with placeholder tokens), .venv is the local environment whose
+# packages are already covered by scanning uv.lock.
+scan:
+  skip-dirs:
+    - .boost
+    - .venv
